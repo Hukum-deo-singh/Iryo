@@ -1,12 +1,29 @@
+// File: src/app/(tabs)/index.tsx
+
 import { Ionicons } from "@react-native-vector-icons/ionicons";
+import { LinearGradient } from "expo-linear-gradient";
 import type { ComponentProps } from "react";
+
 import {
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import {
+  SKEUO_COLORS,
+  SKEUO_GRADIENTS,
+  SKEUO_RADIUS,
+  SKEUO_SHADOWS,
+  SKEUO_SPACING,
+} from "../../constants/skeuoTheme";
+
+// --------------------------------------------------
+// TYPES
+// --------------------------------------------------
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -17,7 +34,15 @@ type Metric = {
   icon: IconName;
   accent: string;
   tint: string;
+  description: string;
 };
+
+// --------------------------------------------------
+// SAMPLE DASHBOARD DATA
+//
+// These are display-only demo values.
+// Replace them with backend measurements later.
+// --------------------------------------------------
 
 const METRICS: Metric[] = [
   {
@@ -25,80 +50,78 @@ const METRICS: Metric[] = [
     value: "76",
     unit: "bpm",
     icon: "heart-outline",
-    accent: "#E85D8E",
-    tint: "#FFF0F5",
+    accent: SKEUO_COLORS.heart,
+    tint: "#F8E8EC",
+    description: "Sample reading",
   },
   {
     title: "Blood Pressure",
     value: "118/78",
     unit: "mmHg",
     icon: "pulse-outline",
-    accent: "#5875E8",
-    tint: "#EEF2FF",
+    accent: SKEUO_COLORS.bloodPressure,
+    tint: "#E8EDFA",
+    description: "Sample reading",
   },
   {
     title: "Blood Oxygen",
     value: "98",
     unit: "%",
     icon: "water-outline",
-    accent: "#159B9B",
-    tint: "#E7F8F6",
+    accent: SKEUO_COLORS.oxygen,
+    tint: "#E2F0F4",
+    description: "Sample reading",
   },
   {
     title: "Temperature",
     value: "36.7",
     unit: "°C",
     icon: "thermometer-outline",
-    accent: "#D78A35",
-    tint: "#FFF4E6",
+    accent: SKEUO_COLORS.temperature,
+    tint: "#F8EDE0",
+    description: "Sample reading",
   },
 ];
 
-const PULSE_TREND = [
-  { day: "M", value: 66, height: 43 },
-  { day: "T", value: 69, height: 49 },
-  { day: "W", value: 72, height: 56 },
-  { day: "T", value: 70, height: 52 },
-  { day: "F", value: 74, height: 61 },
-  { day: "S", value: 71, height: 54 },
-  { day: "S", value: 76, height: 67 },
+const WEEKLY_TREND = [
+  { day: "M", height: 36 },
+  { day: "T", height: 47 },
+  { day: "W", height: 42 },
+  { day: "T", height: 55 },
+  { day: "F", height: 49 },
+  { day: "S", height: 63 },
+  { day: "S", height: 57 },
 ];
 
-function getGreeting() {
+// --------------------------------------------------
+// HELPERS
+// --------------------------------------------------
+
+function getGreeting(): string {
   const hour = new Date().getHours();
 
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
+  if (hour < 12) {
+    return "Good morning";
+  }
+
+  if (hour < 17) {
+    return "Good afternoon";
+  }
+
   return "Good evening";
 }
 
-function MetricCard({ item }: { item: Metric }) {
-  return (
-    <View style={styles.metricCard}>
-      <View
-        style={[
-          styles.metricIcon,
-          { backgroundColor: item.tint },
-        ]}
-      >
-        <Ionicons
-          name={item.icon}
-          size={21}
-          color={item.accent}
-        />
-      </View>
-
-      <Text style={styles.metricTitle}>{item.title}</Text>
-
-      <View style={styles.metricValueRow}>
-        <Text style={styles.metricValue}>{item.value}</Text>
-        <Text style={styles.metricUnit}>{item.unit}</Text>
-      </View>
-
-      <Text style={styles.metricFootnote}>Preview value</Text>
-    </View>
-  );
+function getFormattedDate(): string {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 }
+
+// --------------------------------------------------
+// REUSABLE SECTION HEADING
+// --------------------------------------------------
 
 function SectionHeading({
   title,
@@ -110,161 +133,234 @@ function SectionHeading({
   return (
     <View style={styles.sectionHeading}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+
+      <Text style={styles.sectionSubtitle}>
+        {subtitle}
+      </Text>
     </View>
   );
 }
 
-export default function DashboardScreen() {
-  const today = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-  });
+// --------------------------------------------------
+// RAISED METRIC CARD
+// --------------------------------------------------
 
+function MetricCard({ item }: { item: Metric }) {
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+    <View style={styles.metricOuter}>
+      <LinearGradient
+        colors={[SKEUO_COLORS.surfaceLight, item.tint]}
+        style={styles.metricCard}
       >
-        {/* Brand header */}
-        <View style={styles.header}>
-          <View style={styles.brandRow}>
-            <View style={styles.brandIcon}>
-              <Ionicons
-                name="pulse-outline"
-                size={25}
-                color="#FFFFFF"
-              />
-            </View>
-
-            <View>
-              <Text style={styles.brandName}>iryo</Text>
-              <Text style={styles.brandCaption}>
-                YOUR HEALTH COMPANION
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.headerDate}>
+        {/* Raised icon control */}
+        <View style={styles.metricIconOuter}>
+          <View
+            style={[
+              styles.metricIconInner,
+              { backgroundColor: item.tint },
+            ]}
+          >
             <Ionicons
-              name="calendar-outline"
-              size={14}
-              color="#64748B"
+              name={item.icon}
+              size={22}
+              color={item.accent}
             />
-            <Text style={styles.dateText}>{today}</Text>
           </View>
         </View>
 
-        {/* Greeting */}
-        <View style={styles.greetingSection}>
-          <Text style={styles.greeting}>{getGreeting()} 👋</Text>
+        <Text style={styles.metricTitle}>
+          {item.title}
+        </Text>
 
-          <Text style={styles.pageTitle}>
-            Your health,{ "\n" }in one view.
+        <View style={styles.metricValueRow}>
+          <Text
+            adjustsFontSizeToFit
+            numberOfLines={1}
+            style={styles.metricValue}
+          >
+            {item.value}
           </Text>
 
-          <Text style={styles.pageSubtitle}>
-            Keep track of your measurements and build a clearer
-            picture of your health over time.
+          <Text style={styles.metricUnit}>
+            {item.unit}
           </Text>
         </View>
 
-        {/* Preview status */}
-        <View style={styles.demoNotice}>
+        <View style={styles.metricFooter}>
+          <View
+            style={[
+              styles.metricIndicator,
+              { backgroundColor: item.accent },
+            ]}
+          />
+
+          <Text style={styles.metricDescription}>
+            {item.description}
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+}
+
+// --------------------------------------------------
+// INSTRUMENT STYLE GAUGE
+// --------------------------------------------------
+
+function InstrumentGauge() {
+  return (
+    <LinearGradient
+      colors={[...SKEUO_GRADIENTS.instrumentPanel]}
+      style={styles.instrumentCard}
+    >
+      <View style={styles.instrumentTop}>
+        <View>
+          <Text style={styles.instrumentEyebrow}>
+            IRYO HEALTH MONITOR
+          </Text>
+
+          <Text style={styles.instrumentTitle}>
+            Health overview
+          </Text>
+        </View>
+
+        <View style={styles.instrumentBadge}>
           <Ionicons
-            name="information-circle-outline"
-            size={21}
-            color="#A76D18"
+            name="pulse-outline"
+            size={20}
+            color="#D9E5FF"
+          />
+        </View>
+      </View>
+
+      <View style={styles.instrumentDisplay}>
+        <View style={styles.instrumentDisplayTop}>
+          <View style={styles.instrumentStatus}>
+            <View style={styles.instrumentStatusDot} />
+
+            <Text style={styles.instrumentStatusText}>
+              DEMO DISPLAY
+            </Text>
+          </View>
+
+          <Ionicons
+            name="hardware-chip-outline"
+            size={19}
+            color="#AFC2E8"
+          />
+        </View>
+
+        <View style={styles.instrumentMainValue}>
+          <Ionicons
+            name="heart"
+            size={24}
+            color="#F08BA0"
           />
 
-          <View style={styles.demoNoticeText}>
-            <Text style={styles.demoNoticeTitle}>
-              Dashboard preview
+          <Text style={styles.instrumentValue}>
+            76
+          </Text>
+
+          <View style={styles.instrumentUnitContainer}>
+            <Text style={styles.instrumentUnit}>
+              BPM
             </Text>
-            <Text style={styles.demoNoticeDescription}>
-              Sample values only. No live device or backend data
-              is connected yet.
+
+            <Text style={styles.instrumentUnitCaption}>
+              HEART RATE
             </Text>
           </View>
         </View>
 
-        {/* Latest measurements */}
-        <SectionHeading
-          title="Latest measurements"
-          subtitle="Example readings for the dashboard preview"
-        />
+        <View style={styles.instrumentDivider} />
 
-        <View style={styles.metricsGrid}>
-          {METRICS.map((item) => (
-            <MetricCard key={item.title} item={item} />
-          ))}
-        </View>
+        <View style={styles.instrumentBottom}>
+          <View>
+            <Text style={styles.instrumentSmallLabel}>
+              DEVICE STATUS
+            </Text>
 
-        {/* Weekly pulse chart */}
-        <View style={styles.trendHeader}>
-          <SectionHeading
-            title="Health trends"
-            subtitle="A simple view of your measurement history"
-          />
+            <Text style={styles.instrumentSmallValue}>
+              Not connected
+            </Text>
+          </View>
 
-          <View style={styles.weekBadge}>
+          <View style={styles.instrumentStatusIcon}>
             <Ionicons
-              name="calendar-outline"
-              size={13}
-              color="#64748B"
+              name="link-outline"
+              size={19}
+              color="#D3DDF3"
             />
-            <Text style={styles.weekBadgeText}>7 days</Text>
           </View>
         </View>
+      </View>
 
-        <View style={styles.chartCard}>
-          <View style={styles.chartTitleRow}>
-            <View>
-              <Text style={styles.chartTitle}>
-                Heart rate
-              </Text>
+      <Text style={styles.instrumentFootnote}>
+        Illustrative values only. No live sensor data is
+        connected.
+      </Text>
+    </LinearGradient>
+  );
+}
 
-              <Text style={styles.chartSubtitle}>
-                Sample readings · bpm
-              </Text>
-            </View>
+// --------------------------------------------------
+// WEEKLY TREND PANEL
+// --------------------------------------------------
 
-            <View style={styles.chartIcon}>
-              <Ionicons
-                name="pulse-outline"
-                size={22}
-                color="#4265D8"
-              />
-            </View>
-          </View>
+function WeeklyTrendCard() {
+  return (
+    <View style={styles.trendOuter}>
+      <View style={styles.trendCard}>
+        <View style={styles.trendHeader}>
+          <View style={styles.trendHeadingText}>
+            <Text style={styles.trendTitle}>
+              Heart rate history
+            </Text>
 
-          <View style={styles.chartSummary}>
-            <Text style={styles.chartSummaryValue}>76</Text>
-            <Text style={styles.chartSummaryUnit}>bpm</Text>
-            <Text style={styles.chartSummaryLabel}>
-              Demo value
+            <Text style={styles.trendSubtitle}>
+              Example measurements · last 7 days
             </Text>
           </View>
 
-          <View style={styles.chart}>
-            {PULSE_TREND.map((item, index) => (
+          <View style={styles.trendIcon}>
+            <Ionicons
+              name="analytics-outline"
+              size={21}
+              color={SKEUO_COLORS.primary}
+            />
+          </View>
+        </View>
+
+        {/* Recessed chart area */}
+        <View style={styles.chartInset}>
+          <View style={styles.chartGuides}>
+            <View style={styles.chartGuideLine} />
+            <View style={styles.chartGuideLine} />
+            <View style={styles.chartGuideLine} />
+          </View>
+
+          <View style={styles.chartBars}>
+            {WEEKLY_TREND.map((item, index) => (
               <View
                 key={`${item.day}-${index}`}
                 style={styles.chartColumn}
               >
-                <View style={styles.chartTrack}>
-                  <View
+                <View style={styles.chartBarTrack}>
+                  <LinearGradient
+                    colors={
+                      index === WEEKLY_TREND.length - 1
+                        ? [
+                            SKEUO_COLORS.primaryLight,
+                            SKEUO_COLORS.primaryDark,
+                          ]
+                        : [
+                            "#C9D5EC",
+                            "#8DA4CD",
+                          ]
+                    }
                     style={[
                       styles.chartBar,
-                      {
-                        height: item.height,
-                        backgroundColor:
-                          index === PULSE_TREND.length - 1
-                            ? "#4265D8"
-                            : "#C9D5FA",
-                      },
+                      { height: item.height },
                     ]}
                   />
                 </View>
@@ -272,7 +368,7 @@ export default function DashboardScreen() {
                 <Text
                   style={[
                     styles.chartDay,
-                    index === PULSE_TREND.length - 1 &&
+                    index === WEEKLY_TREND.length - 1 &&
                       styles.chartDayActive,
                   ]}
                 >
@@ -281,72 +377,240 @@ export default function DashboardScreen() {
               </View>
             ))}
           </View>
-
-          <View style={styles.chartFooter}>
-            <Ionicons
-              name="information-circle-outline"
-              size={15}
-              color="#8490A4"
-            />
-
-            <Text style={styles.chartFooterText}>
-              Illustrative trend only. Actual history will come
-              from saved measurements.
-            </Text>
-          </View>
         </View>
 
-        {/* Recommendations */}
-        <SectionHeading
-          title="Recommendations"
-          subtitle="A preview of future health insights"
-        />
+        <View style={styles.chartLegend}>
+          <View style={styles.chartLegendDot} />
 
-        <View style={styles.recommendationCard}>
-          <View style={styles.recommendationIcon}>
+          <Text style={styles.chartLegendText}>
+            Illustrative trend — not actual measurement history
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// --------------------------------------------------
+// DAILY INSIGHT PANEL
+// --------------------------------------------------
+
+function InsightCard() {
+  return (
+    <View style={styles.insightOuter}>
+      <LinearGradient
+        colors={[
+          SKEUO_COLORS.surfaceLight,
+          SKEUO_COLORS.backgroundLight,
+        ]}
+        style={styles.insightCard}
+      >
+        <View style={styles.insightIconOuter}>
+          <View style={styles.insightIconInner}>
             <Ionicons
               name="sparkles-outline"
-              size={23}
-              color="#7654C8"
+              size={22}
+              color={SKEUO_COLORS.primary}
             />
-          </View>
-
-          <View style={styles.recommendationContent}>
-            <View style={styles.recommendationLabelRow}>
-              <Text style={styles.recommendationLabel}>
-                DAILY HABIT
-              </Text>
-
-              <View style={styles.previewPill}>
-                <Text style={styles.previewPillText}>
-                  PREVIEW
-                </Text>
-              </View>
-            </View>
-
-            <Text style={styles.recommendationTitle}>
-              Make your readings consistent
-            </Text>
-
-            <Text style={styles.recommendationDescription}>
-              Take measurements under similar conditions and
-              follow your device instructions. Consistent
-              readings help make trends easier to compare.
-            </Text>
           </View>
         </View>
 
-        {/* Footer */}
+        <View style={styles.insightContent}>
+          <View style={styles.insightLabelRow}>
+            <Text style={styles.insightLabel}>
+              DAILY HABIT
+            </Text>
+
+            <View style={styles.previewBadge}>
+              <Text style={styles.previewBadgeText}>
+                PREVIEW
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.insightTitle}>
+            Make measurements consistent
+          </Text>
+
+          <Text style={styles.insightDescription}>
+            Follow your device instructions and take readings
+            under similar conditions. Consistency makes
+            measurements easier to compare over time.
+          </Text>
+        </View>
+      </LinearGradient>
+    </View>
+  );
+}
+
+// --------------------------------------------------
+// MAIN DASHBOARD
+// --------------------------------------------------
+
+export default function DashboardScreen() {
+  return (
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top"]}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* ========================================
+            HEADER
+        ======================================== */}
+
+        <View style={styles.header}>
+          <View style={styles.brandRow}>
+            <View style={styles.brandOuter}>
+              <LinearGradient
+                colors={[
+                  SKEUO_COLORS.primaryLight,
+                  SKEUO_COLORS.primaryDark,
+                ]}
+                style={styles.brandIcon}
+              >
+                <Ionicons
+                  name="pulse-outline"
+                  size={25}
+                  color="#FFFFFF"
+                />
+              </LinearGradient>
+            </View>
+
+            <View>
+              <Text style={styles.brandName}>
+                iryo
+              </Text>
+
+              <Text style={styles.brandCaption}>
+                HEALTH COMPANION
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.dateOuter}>
+            <View style={styles.dateInner}>
+              <Ionicons
+                name="calendar-outline"
+                size={15}
+                color={SKEUO_COLORS.textSecondary}
+              />
+
+              <Text style={styles.dateText}>
+                {getFormattedDate()}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ========================================
+            GREETING
+        ======================================== */}
+
+        <View style={styles.greetingSection}>
+          <Text style={styles.greeting}>
+            {getGreeting()} 👋
+          </Text>
+
+          <Text style={styles.pageTitle}>
+            Your health,{"\n"}in one view.
+          </Text>
+
+          <Text style={styles.pageSubtitle}>
+            Keep track of your measurements and understand
+            your health history over time.
+          </Text>
+        </View>
+
+        {/* ========================================
+            DEMO DATA NOTICE
+        ======================================== */}
+
+        <View style={styles.demoOuter}>
+          <View style={styles.demoInner}>
+            <View style={styles.demoIcon}>
+              <Ionicons
+                name="information-circle-outline"
+                size={21}
+                color={SKEUO_COLORS.warning}
+              />
+            </View>
+
+            <View style={styles.demoTextContainer}>
+              <Text style={styles.demoTitle}>
+                Preview mode
+              </Text>
+
+              <Text style={styles.demoDescription}>
+                Values shown here are examples. Live device
+                readings will appear after hardware and
+                backend integration.
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ========================================
+            INSTRUMENT PANEL
+        ======================================== */}
+
+        <InstrumentGauge />
+
+        {/* ========================================
+            HEALTH METRICS
+        ======================================== */}
+
+        <SectionHeading
+          title="Health measurements"
+          subtitle="Example readings from supported measurement types"
+        />
+
+        <View style={styles.metricsGrid}>
+          {METRICS.map((item) => (
+            <MetricCard
+              key={item.title}
+              item={item}
+            />
+          ))}
+        </View>
+
+        {/* ========================================
+            HEALTH HISTORY
+        ======================================== */}
+ <SectionHeading
+          title="Your health history"
+          subtitle="A preview of the measurement trends section"
+        />
+
+        <WeeklyTrendCard />
+
+        {/* ========================================
+            INSIGHTS
+        ======================================== */}
+
+        <SectionHeading
+          title="Health insights"
+          subtitle="Helpful habits for consistent measurements"
+        />
+
+        <InsightCard />
+
+        {/* ========================================
+            FOOTER
+        ======================================== */}
+
         <View style={styles.footer}>
           <Ionicons
             name="shield-checkmark-outline"
             size={17}
-            color="#8290A5"
+            color={SKEUO_COLORS.textMuted}
           />
 
           <Text style={styles.footerText}>
-            Health measurements support awareness; they do not
-            replace professional medical advice.
+            Health measurements support awareness and do
+            not replace professional medical advice.
           </Text>
         </View>
       </ScrollView>
@@ -354,443 +618,755 @@ export default function DashboardScreen() {
   );
 }
 
+// --------------------------------------------------
+// STYLES
+// --------------------------------------------------
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F6F8FC",
+    backgroundColor: SKEUO_COLORS.background,
   },
 
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 135,
+    paddingHorizontal: SKEUO_LAYOUT_PADDING(),
+    paddingTop: SKEUO_SPACING.md,
+    paddingBottom: 145,
   },
+
+  // HEADER
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 30,
+    gap: SKEUO_SPACING.sm,
+    marginBottom: 28,
   },
 
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: SKEUO_SPACING.sm,
+  },
+
+  brandOuter: {
+    width: 51,
+    height: 51,
+    padding: 3,
+    borderRadius: 18,
+    backgroundColor: SKEUO_COLORS.surface,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: "#D1D4CC",
+    borderBottomColor: "#C3C7BE",
+    ...SKEUO_SHADOWS.raisedSmall,
   },
 
   brandIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: "#192B52",
+    flex: 1,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
 
   brandName: {
     fontSize: 25,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: -1,
-    color: "#192B52",
+    color: SKEUO_COLORS.text,
   },
 
   brandCaption: {
-    fontSize: 9,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    color: "#8490A5",
-    marginTop: 1,
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.15,
+    color: SKEUO_COLORS.textMuted,
+    marginTop: 2,
   },
 
-  headerDate: {
+  dateOuter: {
+    padding: 3,
+    borderRadius: 13,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: SKEUO_COLORS.borderLight,
+    borderBottomColor: SKEUO_COLORS.borderLight,
+  },
+
+  dateInner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
     paddingHorizontal: 9,
-    paddingVertical: 8,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E9EDF5",
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: SKEUO_COLORS.surface,
   },
 
   dateText: {
     fontSize: 10,
-    fontWeight: "600",
-    color: "#64748B",
+    fontWeight: "700",
+    color: SKEUO_COLORS.textSecondary,
   },
 
+  // GREETING
+
   greetingSection: {
-    marginBottom: 22,
+    marginBottom: 23,
   },
 
   greeting: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#5875C9",
+    fontWeight: "800",
+    color: SKEUO_COLORS.primary,
     marginBottom: 9,
   },
 
   pageTitle: {
-    fontSize: 34,
+    fontSize: 33,
     lineHeight: 40,
-    fontWeight: "800",
-    letterSpacing: -1.2,
-    color: "#172746",
+    fontWeight: "900",
+    letterSpacing: -1.15,
+    color: SKEUO_COLORS.text,
   },
 
   pageSubtitle: {
-    fontSize: 14,
+    maxWidth: 325,
+    fontSize: 13,
     lineHeight: 21,
-    color: "#728096",
+    color: SKEUO_COLORS.textSecondary,
     marginTop: 10,
-    maxWidth: 330,
   },
 
-  demoNotice: {
+  // DEMO NOTICE
+
+  demoOuter: {
+    padding: 4,
+    borderRadius: SKEUO_RADIUS.large,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: SKEUO_COLORS.borderLight,
+    borderBottomColor: SKEUO_COLORS.borderLight,
+    marginBottom: 24,
+  },
+
+  demoInner: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
-    backgroundColor: "#FFF8E9",
-    borderWidth: 1,
-    borderColor: "#F4E5C5",
+    gap: 11,
     padding: 13,
-    borderRadius: 17,
-    marginBottom: 27,
+    borderRadius: 15,
+    backgroundColor: "#F8F0DD",
+    borderWidth: 1,
+    borderColor: "#E5D5B6",
   },
 
-  demoNoticeText: {
+  demoIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: "#F4E5C6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  demoTextContainer: {
     flex: 1,
   },
 
-  demoNoticeTitle: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#855B19",
-    marginBottom: 3,
+  demoTitle: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#79561E",
   },
 
-  demoNoticeDescription: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#8A734F",
+  demoDescription: {
+    fontSize: 11,
+    lineHeight: 17,
+    color: "#846F4C",
+    marginTop: 4,
   },
+
+  // INSTRUMENT PANEL
+
+  instrumentCard: {
+    borderRadius: SKEUO_RADIUS.panel,
+    padding: 18,
+    marginBottom: 29,
+    borderWidth: 1,
+    borderTopColor: "#65738B",
+    borderLeftColor: "#58667E",
+    borderRightColor: "#1F2938",
+    borderBottomColor: "#1D2735",
+    ...SKEUO_SHADOWS.floating,
+  },
+
+  instrumentTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
+
+  instrumentEyebrow: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+    color: "#AEBFE0",
+  },
+
+  instrumentTitle: {
+    fontSize: 19,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginTop: 5,
+  },
+
+  instrumentBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: SKEUO_COLORS.instrumentSurface,
+    borderWidth: 1,
+    borderTopColor: "#52617A",
+    borderLeftColor: "#52617A",
+    borderRightColor: "#202A39",
+    borderBottomColor: "#202A39",
+    ...SKEUO_SHADOWS.raisedSmall,
+  },
+
+  instrumentDisplay: {
+    padding: 16,
+    borderRadius: 19,
+    backgroundColor: "#1E2939",
+    borderWidth: 1,
+    borderTopColor: "#17202D",
+    borderLeftColor: "#17202D",
+    borderRightColor: "#46536A",
+    borderBottomColor: "#46536A",
+  },
+
+  instrumentDisplayTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  instrumentStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 9,
+    backgroundColor: "#2A3649",
+    borderWidth: 1,
+    borderColor: "#3A4960",
+  },
+
+  instrumentStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#D8B366",
+  },
+
+  instrumentStatusText: {
+    fontSize: 8,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+    color: "#D5DFF2",
+  },
+
+  instrumentMainValue: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    marginTop: 22,
+    marginBottom: 20,
+  },
+
+  instrumentValue: {
+    fontSize: 49,
+    lineHeight: 56,
+    fontWeight: "900",
+    letterSpacing: -1.7,
+    color: "#FFFFFF",
+  },
+
+  instrumentUnitContainer: {
+    flex: 1,
+    marginLeft: 1,
+  },
+
+  instrumentUnit: {
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    color: "#B8C9E8",
+  },
+
+  instrumentUnitCaption: {
+    fontSize: 8,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    color: "#8F9FB9",
+    marginTop: 4,
+  },
+
+  instrumentDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#46536A",
+    marginBottom: 15,
+  },
+
+  instrumentBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  instrumentSmallLabel: {
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: "#98A9C5",
+  },
+
+  instrumentSmallValue: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginTop: 5,
+  },
+
+  instrumentStatusIcon: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: "#2A3649",
+    borderWidth: 1,
+    borderColor: "#3C4A61",
+  },
+
+  instrumentFootnote: {
+    fontSize: 10,
+    lineHeight: 15,
+    color: "#B6C3D9",
+    marginTop: 13,
+  },
+
+  // SECTION HEADINGS
 
   sectionHeading: {
-    flex: 1,
-    marginBottom: 14,
+    marginBottom: 15,
   },
 
   sectionTitle: {
     fontSize: 19,
-    fontWeight: "800",
+    lineHeight: 26,
+    fontWeight: "900",
     letterSpacing: -0.4,
-    color: "#172746",
+    color: SKEUO_COLORS.text,
   },
 
   sectionSubtitle: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#8490A5",
+    fontSize: 11,
+    lineHeight: 17,
+    color: SKEUO_COLORS.textSecondary,
     marginTop: 4,
   },
+
+  // METRIC CARDS
 
   metricsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginBottom: 25,
+    marginBottom: 16,
+  },
+
+  metricOuter: {
+    width: "48.3%",
+    padding: 3,
+    borderRadius: SKEUO_RADIUS.large,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderLight,
+    borderLeftColor: SKEUO_COLORS.borderLight,
+    borderRightColor: SKEUO_COLORS.borderDark,
+    borderBottomColor: SKEUO_COLORS.borderDark,
+    marginBottom: 13,
+    ...SKEUO_SHADOWS.raised,
   },
 
   metricCard: {
-    width: "48.3%",
-    minHeight: 147,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 21,
+    flex: 1,
+    minHeight: 175,
+    borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#EDF0F6",
-    padding: 13,
-    marginBottom: 11,
-    shadowColor: "#1C3156",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.035,
-    shadowRadius: 12,
-    elevation: 2,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: "#DFE1DB",
+    borderBottomColor: "#D5D8D0",
+    padding: 12,
   },
 
-  metricIcon: {
-    width: 39,
-    height: 39,
+  metricIconOuter: {
+    alignSelf: "flex-start",
+    padding: 3,
     borderRadius: 13,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: SKEUO_COLORS.borderLight,
+    borderBottomColor: SKEUO_COLORS.borderLight,
+    marginBottom: 13,
+  },
+
+  metricIconInner: {
+    width: 35,
+    height: 35,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
   },
 
   metricTitle: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#718096",
-    marginBottom: 7,
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: "800",
+    color: SKEUO_COLORS.textSecondary,
+    minHeight: 29,
   },
 
   metricValueRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    flexWrap: "wrap",
+    flexWrap: "nowrap",
     gap: 4,
+    marginTop: 3,
   },
 
   metricValue: {
-    fontSize: 25,
-    fontWeight: "800",
-    color: "#192B52",
-    letterSpacing: -0.7,
+    flexShrink: 1,
+    fontSize: 23,
+    fontWeight: "900",
+    letterSpacing: -0.6,
+    color: SKEUO_COLORS.text,
   },
 
   metricUnit: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#8490A5",
+    fontSize: 9,
+    fontWeight: "800",
+    color: SKEUO_COLORS.textSecondary,
   },
 
-  metricFootnote: {
-    fontSize: 10,
-    color: "#9BA5B6",
-    marginTop: 7,
+  metricFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: "auto",
+    paddingTop: 11,
+  },
+
+  metricIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  metricDescription: {
+    flexShrink: 1,
+    fontSize: 9,
+    color: SKEUO_COLORS.textSecondary,
+  },
+
+  // WEEKLY TREND
+
+  trendOuter: {
+    padding: 4,
+    borderRadius: SKEUO_RADIUS.panel,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderLight,
+    borderLeftColor: SKEUO_COLORS.borderLight,
+    borderRightColor: SKEUO_COLORS.borderDark,
+    borderBottomColor: SKEUO_COLORS.borderDark,
+    marginBottom: 29,
+    ...SKEUO_SHADOWS.raised,
+  },
+
+  trendCard: {
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: SKEUO_COLORS.surface,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: "#D8DBD4",
+    borderBottomColor: "#D0D3CC",
   },
 
   trendHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    marginBottom: 1,
-  },
-
-  weekBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 7,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: "#E9EDF5",
-  },
-
-  weekBadgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#64748B",
-  },
-
-  chartCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 23,
-    borderWidth: 1,
-    borderColor: "#EDF0F6",
-    padding: 18,
-    marginBottom: 27,
-    shadowColor: "#1C3156",
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 15,
-    elevation: 2,
-  },
-
-  chartTitleRow: {
-    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 10,
+    marginBottom: 18,
   },
 
-  chartTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#253654",
+  trendHeadingText: {
+    flex: 1,
   },
 
-  chartSubtitle: {
-    fontSize: 11,
-    color: "#8490A5",
-    marginTop: 4,
+  trendTitle: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: SKEUO_COLORS.text,
   },
 
-  chartIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: "#EEF2FF",
+  trendSubtitle: {
+    fontSize: 10,
+    lineHeight: 16,
+    color: SKEUO_COLORS.textSecondary,
+    marginTop: 5,
+  },
+
+  trendIcon: {
+    width: 41,
+    height: 41,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: SKEUO_COLORS.surface,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: "#D1D4CC",
+    borderBottomColor: "#C4C8BF",
+    ...SKEUO_SHADOWS.raisedSmall,
   },
 
-  chartSummary: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 5,
-    marginTop: 18,
+  chartInset: {
+    height: 156,
+    paddingHorizontal: 9,
+    paddingTop: 12,
+    paddingBottom: 8,
+    borderRadius: 15,
+    backgroundColor: "#DFE2DC",
+    borderWidth: 1,
+    borderTopColor: "#C7CAC2",
+    borderLeftColor: "#C7CAC2",
+    borderRightColor: "#FFFFFF",
+    borderBottomColor: "#FFFFFF",
+    overflow: "hidden",
   },
 
-  chartSummaryValue: {
-    fontSize: 31,
-    fontWeight: "800",
-    color: "#192B52",
-    letterSpacing: -0.9,
+  chartGuides: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "space-evenly",
+    paddingHorizontal: 10,
+    paddingVertical: 20,
   },
 
-  chartSummaryUnit: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#8490A5",
+  chartGuideLine: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(111,122,110,0.17)",
   },
 
-  chartSummaryLabel: {
-    fontSize: 10,
-    color: "#9BA5B6",
-    marginLeft: 4,
-  },
-
-  chart: {
-    height: 110,
+  chartBars: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    marginTop: 12,
+    gap: 7,
   },
 
   chartColumn: {
     flex: 1,
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 8,
+    gap: 7,
   },
 
-  chartTrack: {
-    height: 76,
-    width: 24,
-    backgroundColor: "#F2F4FA",
-    borderRadius: 9,
+  chartBarTrack: {
+    width: "100%",
+    maxWidth: 25,
+    height: 84,
     justifyContent: "flex-end",
     alignItems: "center",
     overflow: "hidden",
+    borderRadius: 8,
+    backgroundColor: "#D0D4CD",
+    borderWidth: 1,
+    borderTopColor: "#C5C9C1",
+    borderLeftColor: "#C5C9C1",
+    borderRightColor: "#F8F9F6",
+    borderBottomColor: "#F8F9F6",
   },
 
   chartBar: {
-    width: 24,
-    borderRadius: 8,
+    width: "100%",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: "rgba(50,65,90,0.15)",
+    borderBottomColor: "rgba(50,65,90,0.15)",
   },
 
   chartDay: {
     fontSize: 10,
-    fontWeight: "600",
-    color: "#9BA5B6",
+    fontWeight: "700",
+    color: SKEUO_COLORS.textSecondary,
   },
 
   chartDayActive: {
-    color: "#4265D8",
-    fontWeight: "800",
+    fontWeight: "900",
+    color: SKEUO_COLORS.primary,
   },
 
-  chartFooter: {
+  chartLegend: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 7,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F2F7",
-    paddingTop: 13,
-    marginTop: 16,
+    marginTop: 13,
   },
 
-  chartFooterText: {
+  chartLegendDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    marginTop: 4,
+    backgroundColor: SKEUO_COLORS.primary,
+  },
+
+  chartLegendText: {
     flex: 1,
-    fontSize: 11,
-    lineHeight: 17,
-    color: "#8490A5",
+    fontSize: 10,
+    lineHeight: 15,
+    color: SKEUO_COLORS.textSecondary,
   },
 
-  recommendationCard: {
+  // INSIGHT CARD
+
+  insightOuter: {
+    padding: 4,
+    borderRadius: SKEUO_RADIUS.large,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: SKEUO_COLORS.borderDark,
+    borderBottomColor: SKEUO_COLORS.borderDark,
+    marginBottom: 22,
+    ...SKEUO_SHADOWS.raised,
+  },
+
+  insightCard: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 13,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 21,
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EDF0F6",
-    padding: 15,
-    marginBottom: 24,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: "#DFE1DB",
+    borderBottomColor: "#D5D8D0",
   },
 
-  recommendationIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
-    backgroundColor: "#F2EDFF",
+  insightIconOuter: {
+    padding: 3,
+    borderRadius: 13,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: SKEUO_COLORS.borderLight,
+    borderBottomColor: SKEUO_COLORS.borderLight,
+  },
+
+  insightIconInner: {
+    width: 37,
+    height: 37,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: SKEUO_COLORS.surfaceLight,
   },
 
-  recommendationContent: {
+  insightContent: {
     flex: 1,
   },
 
-  recommendationLabelRow: {
+  insightLabelRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 6,
     marginBottom: 8,
   },
 
-  recommendationLabel: {
-    fontSize: 10,
-    fontWeight: "800",
+  insightLabel: {
+    fontSize: 9,
+    fontWeight: "900",
     letterSpacing: 1,
-    color: "#8A76C3",
+    color: SKEUO_COLORS.primary,
   },
 
-  previewPill: {
-    backgroundColor: "#F3EFFD",
+  previewBadge: {
     paddingHorizontal: 7,
     paddingVertical: 4,
     borderRadius: 7,
+    backgroundColor: "#E0E7F7",
+    borderWidth: 1,
+    borderColor: "#C9D5ED",
   },
 
-  previewPillText: {
+  previewBadgeText: {
     fontSize: 8,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 0.5,
-    color: "#7654C8",
+    color: SKEUO_COLORS.primaryDark,
   },
 
-  recommendationTitle: {
-    fontSize: 15,
-    lineHeight: 21,
-    fontWeight: "700",
-    color: "#253654",
-  },
-
-  recommendationDescription: {
-    fontSize: 12,
+  insightTitle: {
+    fontSize: 13,
     lineHeight: 19,
-    color: "#7D899D",
+    fontWeight: "900",
+    color: SKEUO_COLORS.text,
+  },
+
+  insightDescription: {
+    fontSize: 10,
+    lineHeight: 17,
+    color: SKEUO_COLORS.textSecondary,
     marginTop: 6,
   },
+
+  // FOOTER
 
   footer: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "center",
     gap: 7,
-    paddingHorizontal: 5,
-    marginBottom: 8,
+    paddingHorizontal: 4,
+    marginBottom: 12,
   },
 
   footerText: {
@@ -798,6 +1374,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 16,
     textAlign: "center",
-    color: "#8490A5",
+    color: SKEUO_COLORS.textMuted,
   },
 });
+
+function SKEUO_LAYOUT_PADDING(): number {
+  return SKEUO_SPACING.lg + 2;
+}
