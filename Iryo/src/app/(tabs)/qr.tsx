@@ -1,7 +1,15 @@
+// File: src/app/(tabs)/qr.tsx
+
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import {
+  CameraView,
+  useCameraPermissions,
+} from "expo-camera";
 import { router } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useCallback, useEffect, useRef } from "react";
+
 import {
   ActivityIndicator,
   Pressable,
@@ -10,323 +18,469 @@ import {
   Text,
   View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useIsFocused } from "@react-navigation/native";
+
+import {
+  SKEUO_COLORS,
+  SKEUO_GRADIENTS,
+  SKEUO_RADIUS,
+  SKEUO_SHADOWS,
+  SKEUO_SPACING,
+} from "../../constants/skeuoTheme";
+
+// --------------------------------------------------
+// QR SCANNER SCREEN
+// --------------------------------------------------
 
 export default function QRScannerScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [scanned, setScanned] = useState(false);
+  const [permission, requestPermission] =
+    useCameraPermissions();
 
   const isFocused = useIsFocused();
+
+  // Prevent duplicate navigation when the same QR is detected
+  // repeatedly by the camera.
   const scanHandled = useRef(false);
 
   // Reset scanning when the user returns to this tab.
   useEffect(() => {
     if (isFocused) {
       scanHandled.current = false;
-      setScanned(false);
     }
   }, [isFocused]);
 
-  // Handle a successful QR scan only once.
+  // --------------------------------------------------
+  // HANDLE QR SCAN
+  // --------------------------------------------------
+
   const handleBarcodeScanned = useCallback(
     ({ data }: { data: string }) => {
-      if (scanHandled.current) {
+      if (!isFocused || scanHandled.current) {
         return;
       }
 
-      const qrPayload = data.trim();
-
-      if (!qrPayload) {
+      if (!data || !data.trim()) {
         return;
       }
 
       scanHandled.current = true;
-      setScanned(true);
 
-      // Open Device Setup and pass along the scanned QR content.
-      // The backend must verify the QR content before trusting it.
-      router.push({
-        pathname: "/device-setup",
-        params: {
-          qrPayload,
-        },
-      });
+      /*
+       * Open the Device Setup page.
+       *
+       * We are not assuming a QR payload format yet.
+       * Member 2 must confirm the hardware QR specification
+       * before the frontend interprets or verifies its data.
+       *
+       * The four-character hexadecimal Device Code will be
+       * entered on the next screen, according to the
+       * current project requirement.
+       */
+
+      router.push("/device-setup");
     },
-    []
+    [isFocused]
   );
+
+  // --------------------------------------------------
+  // CAMERA PERMISSION
+  // --------------------------------------------------
 
   const handleRequestPermission = async () => {
     try {
       await requestPermission();
     } catch {
-      // The permission screen remains visible if the request fails.
+      // The permission UI remains available if the request fails.
     }
   };
 
+  // --------------------------------------------------
+  // PERMISSION LOADING STATE
+  // --------------------------------------------------
+
+  if (!permission) {
+    return (
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator
+            size="large"
+            color={SKEUO_COLORS.primary}
+          />
+
+          <Text style={styles.loadingText}>
+            Preparing your scanner...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // --------------------------------------------------
+  // MAIN SCREEN
+  // --------------------------------------------------
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["top"]}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.eyebrow}>IRYO CONNECT</Text>
+        {/* ==========================================
+            HEADER
+        ========================================== */}
 
-            <Text style={styles.title}>
+        <View style={styles.header}>
+          <View style={styles.headerText}>
+            <Text style={styles.eyebrow}>
+              IRYO CONNECT
+            </Text>
+
+            <Text style={styles.pageTitle}>
               Scan your device
             </Text>
 
-            <Text style={styles.subtitle}>
-              Scan the QR code on your Iryo device to continue
-              to the device authentication page.
+            <Text style={styles.pageSubtitle}>
+              Scan a QR code to open the device setup process.
             </Text>
           </View>
 
-          <View style={styles.headerIcon}>
-            <Ionicons
-              name="qr-code-outline"
-              size={27}
-              color="#FFFFFF"
-            />
+          <View style={styles.headerOuter}>
+            <LinearGradient
+              colors={[
+                SKEUO_COLORS.primaryLight,
+                SKEUO_COLORS.primaryDark,
+              ]}
+              style={styles.headerIcon}
+            >
+              <Ionicons
+                name="qr-code-outline"
+                size={27}
+                color="#FFFFFF"
+              />
+            </LinearGradient>
           </View>
         </View>
 
-        {/* Progress */}
-        <View style={styles.progressRow}>
-          <View style={styles.progressStep}>
-            <View style={styles.progressNumberActive}>
-              <Text style={styles.progressNumberTextActive}>1</Text>
-            </View>
+        {/* ==========================================
+            PROGRESS INDICATOR
+        ========================================== */}
 
-            <Text style={styles.progressLabelActive}>
-              Scan QR
-            </Text>
-          </View>
+        <View style={styles.progressOuter}>
+          <View style={styles.progressInner}>
+            <View style={styles.progressStep}>
+              <View style={styles.activeStepOuter}>
+                <View style={styles.activeStep}>
+                  <Text style={styles.activeStepText}>
+                    1
+                  </Text>
+                </View>
+              </View>
 
-          <View style={styles.progressLine} />
-
-          <View style={styles.progressStep}>
-            <View style={styles.progressNumber}>
-              <Text style={styles.progressNumberText}>2</Text>
-            </View>
-
-            <Text style={styles.progressLabel}>
-              Device setup
-            </Text>
-          </View>
-        </View>
-
-        {/* Camera card */}
-        <View style={styles.cameraCard}>
-          <View style={styles.cameraCardHeader}>
-            <View style={styles.liveIndicator}>
-              <View style={styles.statusDot} />
-
-              <Text style={styles.liveText}>
-                QR SCANNER
+              <Text style={styles.activeStepLabel}>
+                Scan QR
               </Text>
             </View>
 
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={21}
-              color="#A9C0FF"
-            />
+            <View style={styles.progressLine} />
+
+            <View style={styles.progressStep}>
+              <View style={styles.inactiveStepOuter}>
+                <Text style={styles.inactiveStepText}>
+                  2
+                </Text>
+              </View>
+
+              <Text style={styles.inactiveStepLabel}>
+                Device setup
+              </Text>
+            </View>
           </View>
+        </View>
 
-          <Text style={styles.cameraTitle}>
-            Position the QR code
-          </Text>
+        {/* ==========================================
+            CAMERA PANEL
+        ========================================== */}
 
-          <Text style={styles.cameraSubtitle}>
-            Keep the device QR code inside the scanning frame.
-          </Text>
+        <View style={styles.cameraOuter}>
+          <LinearGradient
+            colors={[
+              ...SKEUO_GRADIENTS.instrumentPanel,
+            ]}
+            style={styles.cameraCard}
+          >
+            {/* Camera card header */}
 
-          {/* Camera preview / permission state */}
-          <View style={styles.cameraViewport}>
-            {!permission ? (
-              <View style={styles.permissionState}>
-                <ActivityIndicator
-                  size="large"
-                  color="#A9C0FF"
-                />
-
-                <Text style={styles.permissionTitle}>
-                  Preparing camera...
-                </Text>
-              </View>
-            ) : !permission.granted ? (
-              <View style={styles.permissionState}>
-                <View style={styles.permissionIcon}>
-                  <Ionicons
-                    name="camera-outline"
-                    size={31}
-                    color="#A9C0FF"
+            <View style={styles.cameraHeader}>
+              <View style={styles.scannerStatusOuter}>
+                <View style={styles.scannerStatusInner}>
+                  <View
+                    style={[
+                      styles.statusDot,
+                      {
+                        backgroundColor:
+                          permission.granted
+                            ? "#63D2A4"
+                            : "#D9B66F",
+                      },
+                    ]}
                   />
+
+                  <Text style={styles.scannerStatusText}>
+                    {permission.granted
+                      ? "CAMERA READY"
+                      : "CAMERA ACCESS"}
+                  </Text>
                 </View>
-
-                <Text style={styles.permissionTitle}>
-                  Camera access needed
-                </Text>
-
-                <Text style={styles.permissionDescription}>
-                  Allow camera access to scan your device's QR
-                  code.
-                </Text>
-
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={handleRequestPermission}
-                  style={({ pressed }) => [
-                    styles.permissionButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.permissionButtonText}>
-                    Allow Camera Access
-                  </Text>
-                </Pressable>
-
-                {!permission.canAskAgain && (
-                  <Text style={styles.settingsHint}>
-                    If access was permanently denied, enable
-                    camera permission in your device settings.
-                  </Text>
-                )}
               </View>
-            ) : !isFocused ? (
-              <View style={styles.permissionState}>
+
+              <View style={styles.cameraHeaderIcon}>
                 <Ionicons
                   name="scan-outline"
-                  size={45}
-                  color="#A9C0FF"
+                  size={21}
+                  color="#DDE7FF"
                 />
-
-                <Text style={styles.permissionTitle}>
-                  Scanner paused
-                </Text>
-
-                <Text style={styles.permissionDescription}>
-                  Return to this tab to scan a QR code.
-                </Text>
               </View>
-            ) : scanned ? (
-              <View style={styles.permissionState}>
-                <ActivityIndicator
-                  size="large"
-                  color="#A9C0FF"
-                />
+            </View>
 
-                <Text style={styles.permissionTitle}>
-                  Opening device setup...
-                </Text>
-              </View>
-            ) : (
-              <>
-                <CameraView
-                  style={StyleSheet.absoluteFillObject}
-                  facing="back"
-                  barcodeScannerSettings={{
-                    barcodeTypes: ["qr"],
-                  }}
-                  onBarcodeScanned={handleBarcodeScanned}
-                />
+            <Text style={styles.cameraTitle}>
+              Position the QR code
+            </Text>
 
-                {/* Visual scanning guide */}
-                <View
-                  pointerEvents="none"
-                  style={styles.cameraOverlay}
-                >
-                  <View style={styles.scanFrame}>
-                    <View
-                      style={[
-                        styles.corner,
-                        styles.topLeft,
+            <Text style={styles.cameraSubtitle}>
+              Hold your device steady and keep the entire
+              QR code inside the frame.
+            </Text>
+
+            {/* ======================================
+                CAMERA VIEWPORT
+            ====================================== */}
+
+            <View style={styles.cameraViewportOuter}>
+              <View style={styles.cameraViewport}>
+                {!permission.granted ? (
+                  // CAMERA PERMISSION SCREEN
+
+                  <View style={styles.permissionContent}>
+                    <View style={styles.permissionIconOuter}>
+                      <View style={styles.permissionIconInner}>
+                        <Ionicons
+                          name="camera-outline"
+                          size={32}
+                          color={SKEUO_COLORS.primary}
+                        />
+                      </View>
+                    </View>
+
+                    <Text style={styles.permissionTitle}>
+                      Camera access required
+                    </Text>
+
+                    <Text style={styles.permissionDescription}>
+                      Allow camera access to scan the QR code
+                      on your Iryo device.
+                    </Text>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={handleRequestPermission}
+                      style={({ pressed }) => [
+                        styles.permissionButtonOuter,
+                        pressed && styles.pressed,
                       ]}
-                    />
+                    >
+                      <LinearGradient
+                        colors={[
+                          ...SKEUO_GRADIENTS.primaryButton,
+                        ]}
+                        style={styles.permissionButton}
+                      >
+                        <Ionicons
+                          name="camera-outline"
+                          size={19}
+                          color="#FFFFFF"
+                        />
 
-                    <View
-                      style={[
-                        styles.corner,
-                        styles.topRight,
-                      ]}
-                    />
+                        <Text
+                          style={styles.permissionButtonText}
+                        >
+                          Allow Camera Access
+                        </Text>
+                      </LinearGradient>
+                    </Pressable>
 
-                    <View
-                      style={[
-                        styles.corner,
-                        styles.bottomLeft,
-                      ]}
-                    />
-
-                    <View
-                      style={[
-                        styles.corner,
-                        styles.bottomRight,
-                      ]}
-                    />
+                    {!permission.canAskAgain && (
+                      <Text style={styles.settingsHint}>
+                        Camera access has been denied.
+                        Enable it from your device settings.
+                      </Text>
+                    )}
                   </View>
+                ) : !isFocused ? (
+                  // PAUSED STATE
 
-                  <Text style={styles.frameHint}>
-                    Align the QR code inside the frame
-                  </Text>
-                </View>
-              </>
-            )}
-          </View>
+                  <View style={styles.permissionContent}>
+                    <Ionicons
+                      name="pause-circle-outline"
+                      size={45}
+                      color={SKEUO_COLORS.textMuted}
+                    />
 
-          <View style={styles.cameraFooter}>
-            <Ionicons
-              name="information-circle-outline"
-              size={19}
-              color="#B9C7E7"
-            />
+                    <Text style={styles.permissionTitle}>
+                      Scanner paused
+                    </Text>
 
-            <Text style={styles.cameraFooterText}>
-              Use the QR code belonging to your authorised
-              Iryo device.
-            </Text>
-          </View>
+                    <Text style={styles.permissionDescription}>
+                      Return to this tab to scan a QR code.
+                    </Text>
+                  </View>
+                ) : (
+                  // LIVE CAMERA
+
+                  <>
+                    <CameraView
+                      style={StyleSheet.absoluteFillObject}
+                      facing="back"
+                      barcodeScannerSettings={{
+                        barcodeTypes: ["qr"],
+                      }}
+                      onBarcodeScanned={
+                        scanHandled.current
+                          ? undefined
+                          : handleBarcodeScanned
+                      }
+                    />
+
+                    {/* Visual scanning frame */}
+
+                    <View
+                      pointerEvents="none"
+                      style={styles.scanOverlay}
+                    >
+                      <View style={styles.scanFrame}>
+                        <View
+                          style={[
+                            styles.corner,
+                            styles.topLeft,
+                          ]}
+                        />
+
+                        <View
+                          style={[
+                            styles.corner,
+                            styles.topRight,
+                          ]}
+                        />
+
+                        <View
+                          style={[
+                            styles.corner,
+                            styles.bottomLeft,
+                          ]}
+                        />
+
+                        <View
+                          style={[
+                            styles.corner,
+                            styles.bottomRight,
+                          ]}
+                        />
+
+                        <View style={styles.scanCenter}>
+                          <Ionicons
+                            name="qr-code-outline"
+                            size={77}
+                            color="#FFFFFF"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.scanHintOuter}>
+                        <Text style={styles.scanHint}>
+                          ALIGN QR CODE WITHIN FRAME
+                        </Text>
+                      </View>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+
+            {/* CAMERA FOOTER */}
+
+            <View style={styles.cameraFooter}>
+              <View style={styles.cameraFooterIcon}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={18}
+                  color="#D6E2FF"
+                />
+              </View>
+
+              <Text style={styles.cameraFooterText}>
+                Scan the intended Iryo QR code. The scan
+                itself does not authenticate the device.
+              </Text>
+            </View>
+          </LinearGradient>
         </View>
 
-        {/* What happens next */}
-        <View style={styles.nextCard}>
-          <View style={styles.nextIcon}>
-            <Ionicons
-              name="keypad-outline"
-              size={23}
-              color="#4567D8"
-            />
-          </View>
+        {/* ==========================================
+            NEXT STEP CARD
+        ========================================== */}
 
-          <View style={styles.nextContent}>
-            <Text style={styles.nextTitle}>
-              What happens next?
-            </Text>
+        <View style={styles.nextOuter}>
+          <LinearGradient
+            colors={[
+              ...SKEUO_GRADIENTS.raisedSurface,
+            ]}
+            style={styles.nextCard}
+          >
+            <View style={styles.nextIconOuter}>
+              <View style={styles.nextIconInner}>
+                <Ionicons
+                  name="keypad-outline"
+                  size={23}
+                  color={SKEUO_COLORS.primary}
+                />
+              </View>
+            </View>
 
-            <Text style={styles.nextDescription}>
-              After scanning, enter the 4-character hexadecimal
-              Device Code printed on your device, your Iryo
-              User ID and your password. Then press START.
-            </Text>
-          </View>
+            <View style={styles.nextContent}>
+              <Text style={styles.nextTitle}>
+                What happens next?
+              </Text>
+
+              <Text style={styles.nextDescription}>
+                After scanning, enter the 4-character
+                hexadecimal Device Code printed on your
+                device, your Iryo User ID and your password.
+                Then press START.
+              </Text>
+            </View>
+          </LinearGradient>
         </View>
 
-        {/* Security note */}
+        {/* ==========================================
+            SECURITY NOTE
+        ========================================== */}
+
         <View style={styles.securityNote}>
           <Ionicons
-            name="lock-closed-outline"
-            size={16}
-            color="#8490A5"
+            name="shield-checkmark-outline"
+            size={17}
+            color={SKEUO_COLORS.textMuted}
           />
 
           <Text style={styles.securityText}>
-            Scanning a QR code does not authenticate a user
-            or verify a device. The backend must verify the
-            submitted details.
+            Device verification and account authentication
+            must be completed by the Java backend.
           </Text>
         </View>
       </ScrollView>
@@ -334,165 +488,267 @@ export default function QRScannerScreen() {
   );
 }
 
+// --------------------------------------------------
+// STYLES — STRICT SKEUOMORPHIC VISUAL LANGUAGE
+// --------------------------------------------------
+
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F7FC",
+    backgroundColor: SKEUO_COLORS.background,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 14,
+  },
+
+  loadingText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: SKEUO_COLORS.textSecondary,
   },
 
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 135,
+    paddingHorizontal: SKEUO_SPACING.lg + 2,
+    paddingTop: SKEUO_SPACING.md,
+    paddingBottom: 145,
   },
+
+  // HEADER
 
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     gap: 12,
     marginBottom: 22,
   },
 
-  headerTextContainer: {
+  headerText: {
     flex: 1,
   },
 
   eyebrow: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.7,
-    color: "#5875C9",
-    marginBottom: 8,
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1.6,
+    color: SKEUO_COLORS.primary,
+    marginBottom: 7,
   },
 
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
+  pageTitle: {
+    fontSize: 25,
+    fontWeight: "900",
     letterSpacing: -0.7,
-    color: "#192B52",
+    color: SKEUO_COLORS.text,
   },
 
-  subtitle: {
+  pageSubtitle: {
     fontSize: 12,
     lineHeight: 19,
-    color: "#77849A",
+    color: SKEUO_COLORS.textSecondary,
     marginTop: 7,
   },
 
+  headerOuter: {
+    padding: 3,
+    borderRadius: 18,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: SKEUO_COLORS.borderDark,
+    borderBottomColor: SKEUO_COLORS.borderDark,
+    ...SKEUO_SHADOWS.raisedSmall,
+  },
+
   headerIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 17,
-    backgroundColor: "#192B52",
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  progressRow: {
+  // PROGRESS
+
+  progressOuter: {
+    padding: 4,
+    borderRadius: SKEUO_RADIUS.large,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: "#FFFFFF",
+    borderBottomColor: "#FFFFFF",
+    marginBottom: 23,
+  },
+
+  progressInner: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 22,
-    paddingHorizontal: 4,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: SKEUO_COLORS.surface,
   },
 
   progressStep: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 7,
   },
 
-  progressNumberActive: {
-    width: 29,
-    height: 29,
-    borderRadius: 15,
-    backgroundColor: "#4265D8",
+  activeStepOuter: {
+    width: 31,
+    height: 31,
+    padding: 3,
+    borderRadius: 12,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: "#FFFFFF",
+    borderBottomColor: "#FFFFFF",
+  },
+
+  activeStep: {
+    flex: 1,
+    borderRadius: 8,
+    backgroundColor: SKEUO_COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  progressNumberTextActive: {
-    fontSize: 12,
-    fontWeight: "800",
+  activeStepText: {
+    fontSize: 11,
+    fontWeight: "900",
     color: "#FFFFFF",
   },
 
-  progressNumber: {
-    width: 29,
-    height: 29,
-    borderRadius: 15,
-    backgroundColor: "#E6EAF3",
+  inactiveStepOuter: {
+    width: 31,
+    height: 31,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: "#FFFFFF",
+    borderBottomColor: "#FFFFFF",
   },
 
-  progressNumberText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#8490A5",
-  },
-
-  progressLabelActive: {
+  inactiveStepText: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#4265D8",
+    color: SKEUO_COLORS.textMuted,
   },
 
-  progressLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#8490A5",
+  activeStepLabel: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: SKEUO_COLORS.primary,
+  },
+
+  inactiveStepLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: SKEUO_COLORS.textMuted,
   },
 
   progressLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: "#DDE3EF",
-    marginHorizontal: 12,
+    height: 2,
+    backgroundColor: SKEUO_COLORS.border,
+    marginHorizontal: 9,
+  },
+
+  // CAMERA CARD
+
+  cameraOuter: {
+    padding: 4,
+    borderRadius: SKEUO_RADIUS.panel,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: SKEUO_COLORS.borderDark,
+    borderBottomColor: SKEUO_COLORS.borderDark,
+    marginBottom: 21,
+    ...SKEUO_SHADOWS.raised,
   },
 
   cameraCard: {
-    backgroundColor: "#192B52",
-    borderRadius: 25,
     padding: 16,
-    marginBottom: 20,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderTopColor: "#68768D",
+    borderLeftColor: "#58667D",
+    borderRightColor: "#1E2938",
+    borderBottomColor: "#1E2938",
     overflow: "hidden",
   },
 
-  cameraCardHeader: {
+  cameraHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 18,
+    justifyContent: "space-between",
+    marginBottom: 17,
   },
 
-  liveIndicator: {
+  scannerStatusOuter: {
+    padding: 3,
+    borderRadius: 11,
+    backgroundColor: "#1E2938",
+    borderWidth: 1,
+    borderTopColor: "#1A2331",
+    borderLeftColor: "#1A2331",
+    borderRightColor: "#47556C",
+    borderBottomColor: "#47556C",
+  },
+
+  scannerStatusInner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.09)",
+    gap: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
 
   statusDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: "#62D8AC",
   },
 
-  liveText: {
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1.1,
-    color: "#D5E0FF",
+  scannerStatusText: {
+    fontSize: 8,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+    color: "#DCE5F7",
+  },
+
+  cameraHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: SKEUO_COLORS.instrumentSurface,
+    borderWidth: 1,
+    borderTopColor: "#56647A",
+    borderLeftColor: "#56647A",
+    borderRightColor: "#1D2735",
+    borderBottomColor: "#1D2735",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   cameraTitle: {
-    fontSize: 21,
-    fontWeight: "800",
+    fontSize: 20,
+    fontWeight: "900",
     letterSpacing: -0.4,
     color: "#FFFFFF",
   },
@@ -500,76 +756,118 @@ const styles = StyleSheet.create({
   cameraSubtitle: {
     fontSize: 11,
     lineHeight: 18,
-    color: "#BAC8E7",
-    marginTop: 6,
+    color: "#BCC8DE",
+    marginTop: 7,
     marginBottom: 17,
   },
 
-  cameraViewport: {
-    height: 350,
+  // CAMERA VIEWPORT — RECESSED PANEL
+
+  cameraViewportOuter: {
+    padding: 4,
     borderRadius: 20,
-    backgroundColor: "#0D1830",
+    backgroundColor: "#1D2736",
+    borderWidth: 1,
+    borderTopColor: "#182231",
+    borderLeftColor: "#182231",
+    borderRightColor: "#657187",
+    borderBottomColor: "#657187",
+  },
+
+  cameraViewport: {
+    height: 340,
+    borderRadius: 15,
+    backgroundColor: "#111B2A",
     overflow: "hidden",
     position: "relative",
   },
 
-  permissionState: {
+  // PERMISSION STATE
+
+  permissionContent: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: 22,
   },
 
-  permissionIcon: {
-    width: 60,
-    height: 60,
+  permissionIconOuter: {
+    padding: 4,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#0E1827",
+    borderWidth: 1,
+    borderTopColor: "#0B1420",
+    borderLeftColor: "#0B1420",
+    borderRightColor: "#45536A",
+    borderBottomColor: "#45536A",
+    marginBottom: 17,
+  },
+
+  permissionIconInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 15,
+    backgroundColor: SKEUO_COLORS.surface,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 17,
   },
 
   permissionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
     textAlign: "center",
-    marginTop: 15,
+    color: "#FFFFFF",
+    marginTop: 5,
   },
 
   permissionDescription: {
-    fontSize: 12,
-    lineHeight: 19,
-    color: "#C0CBE3",
+    fontSize: 11,
+    lineHeight: 18,
+    color: "#B8C5DB",
     textAlign: "center",
     marginTop: 8,
-    marginBottom: 17,
+    marginBottom: 15,
+  },
+
+  permissionButtonOuter: {
+    padding: 3,
+    borderRadius: 15,
+    backgroundColor: "#1A2637",
+    borderWidth: 1,
+    borderTopColor: "#63718A",
+    borderLeftColor: "#63718A",
+    borderRightColor: "#111B29",
+    borderBottomColor: "#111B29",
+    ...SKEUO_SHADOWS.raisedSmall,
   },
 
   permissionButton: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 13,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    marginTop: 6,
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    borderRadius: 11,
   },
 
   permissionButtonText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#192B52",
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
   settingsHint: {
     fontSize: 10,
     lineHeight: 16,
-    color: "#BAC8E7",
     textAlign: "center",
+    color: "#B8C5DB",
     marginTop: 12,
   },
 
-  cameraOverlay: {
+  // SCAN OVERLAY
+
+  scanOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
@@ -578,13 +876,15 @@ const styles = StyleSheet.create({
   scanFrame: {
     width: 225,
     height: 225,
-    borderRadius: 22,
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   corner: {
     position: "absolute",
-    width: 35,
-    height: 35,
+    width: 34,
+    height: 34,
     borderColor: "#FFFFFF",
   },
 
@@ -620,55 +920,115 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 12,
   },
 
-  frameHint: {
-    position: "absolute",
-    bottom: 19,
-    left: 12,
-    right: 12,
-    fontSize: 11,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#FFFFFF",
-    backgroundColor: "rgba(13,24,48,0.68)",
-    paddingVertical: 9,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    overflow: "hidden",
+  scanCenter: {
+    width: 106,
+    height: 106,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(20, 32, 49, 0.48)",
+    borderWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.2)",
+    borderLeftColor: "rgba(255,255,255,0.2)",
+    borderRightColor: "rgba(0,0,0,0.3)",
+    borderBottomColor: "rgba(0,0,0,0.3)",
   },
+
+  scanHintOuter: {
+    position: "absolute",
+    bottom: 18,
+    left: 9,
+    right: 9,
+    alignItems: "center",
+    paddingVertical: 9,
+    borderRadius: 11,
+    backgroundColor: "rgba(12, 23, 38, 0.88)",
+    borderWidth: 1,
+    borderTopColor: "#46546B",
+    borderLeftColor: "#46546B",
+    borderRightColor: "#101A28",
+    borderBottomColor: "#101A28",
+  },
+
+  scanHint: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    color: "#EDF2FC",
+  },
+
+  // CAMERA FOOTER
 
   cameraFooter: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 9,
-    marginTop: 15,
+    gap: 8,
+    marginTop: 14,
+  },
+
+  cameraFooterIcon: {
+    width: 25,
+    height: 25,
+    borderRadius: 8,
+    backgroundColor: "#2D3B50",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   cameraFooterText: {
     flex: 1,
     fontSize: 10,
     lineHeight: 16,
-    color: "#BAC8E7",
+    color: "#C0CBE0",
+    marginTop: 3,
+  },
+
+  // NEXT STEP — RAISED PANEL
+
+  nextOuter: {
+    padding: 4,
+    borderRadius: SKEUO_RADIUS.large,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: SKEUO_COLORS.borderDark,
+    borderBottomColor: SKEUO_COLORS.borderDark,
+    marginBottom: 18,
+    ...SKEUO_SHADOWS.raised,
   },
 
   nextCard: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 13,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 21,
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E9EDF5",
-    padding: 16,
-    marginBottom: 17,
+    borderTopColor: "#FFFFFF",
+    borderLeftColor: "#FFFFFF",
+    borderRightColor: "#E0E2DC",
+    borderBottomColor: "#D4D7D0",
   },
 
-  nextIcon: {
-    width: 45,
-    height: 45,
-    borderRadius: 15,
-    backgroundColor: "#EEF2FF",
+  nextIconOuter: {
+    padding: 3,
+    borderRadius: 13,
+    backgroundColor: SKEUO_COLORS.backgroundDark,
+    borderWidth: 1,
+    borderTopColor: SKEUO_COLORS.borderDark,
+    borderLeftColor: SKEUO_COLORS.borderDark,
+    borderRightColor: "#FFFFFF",
+    borderBottomColor: "#FFFFFF",
+  },
+
+  nextIconInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: SKEUO_COLORS.surface,
   },
 
   nextContent: {
@@ -676,17 +1036,19 @@ const styles = StyleSheet.create({
   },
 
   nextTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#192B52",
-    marginBottom: 7,
+    fontSize: 13,
+    fontWeight: "900",
+    color: SKEUO_COLORS.text,
+    marginBottom: 6,
   },
 
   nextDescription: {
     fontSize: 11,
-    lineHeight: 19,
-    color: "#77849A",
+    lineHeight: 18,
+    color: SKEUO_COLORS.textSecondary,
   },
+
+  // SECURITY FOOTER
 
   securityNote: {
     flexDirection: "row",
@@ -694,17 +1056,20 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 7,
     paddingHorizontal: 5,
-    marginBottom: 8,
+    marginBottom: 12,
   },
 
   securityText: {
     flex: 1,
     fontSize: 10,
     lineHeight: 16,
-    color: "#8490A5",
+    textAlign: "center",
+    color: SKEUO_COLORS.textMuted,
   },
 
+  // INTERACTION
+
   pressed: {
-    opacity: 0.75,
+    opacity: 0.78,
   },
 });
