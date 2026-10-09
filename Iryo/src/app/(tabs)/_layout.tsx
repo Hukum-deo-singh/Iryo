@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
 
   tabBarBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
 
     borderRadius: SKEUO_RADIUS.panel,
 

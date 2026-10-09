@@ -216,8 +216,8 @@ export default function DeviceSetupScreen() {
 
           <View style={styles.formOuter}>
          <LinearGradient
-           colors={someColors}
-      
+           colors={["#FFFFFF", "#E0E2DD"] as const}
+
               style={styles.formCard}
             >
               {/* Form heading */}

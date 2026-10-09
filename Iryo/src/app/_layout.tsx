@@ -17,7 +17,7 @@ export default function RootLayout() {
           headerShown: false,
 
           contentStyle: {
-            backgroundColor: SKEUO_COLORS.background,
+            backgroundColor: "#E5E7E3",
           },
 
           animation: "fade",

@@ -696,13 +696,6 @@ export default function SignupScreen() {
     </SafeAreaView>
   );
 
-  // ------------------------------------------------
-  // LOGIN NAVIGATION HANDLER
-  // ------------------------------------------------
-
-  function handleBackToLogin() {
-    router.replace("/(auth)/login");
-  }
 }
 
 // --------------------------------------------------

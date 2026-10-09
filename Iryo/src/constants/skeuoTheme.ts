@@ -117,9 +117,7 @@ export const SKEUO_GRADIENTS = {
     "#FFFFFF",
     "#F0F2ED",
   ] as const,
-} as const;
-
-raisedSurface: ["#FFFFFF", "#F1F2EF"] as const, int 
+} as const ;
 
 // --------------------------------------------------
 // 3. BORDER RADIUS

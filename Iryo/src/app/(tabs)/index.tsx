@@ -1175,7 +1175,7 @@ const styles = StyleSheet.create({
   },
 
   chartGuides: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "space-evenly",
     paddingHorizontal: 10,
     paddingVertical: 20,

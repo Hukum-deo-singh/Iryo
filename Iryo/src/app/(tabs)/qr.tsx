@@ -5,8 +5,7 @@ import {
   CameraView,
   useCameraPermissions,
 } from "expo-camera";
-import { router } from "expo-router";
-import { useIsFocused } from "@react-navigation/native";
+import { router, useIsFocused } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef } from "react";
 
@@ -345,7 +344,7 @@ export default function QRScannerScreen() {
 
                   <>
                     <CameraView
-                      style={StyleSheet.absoluteFillObject}
+                      style={StyleSheet.absoluteFill}
                       facing="back"
                       barcodeScannerSettings={{
                         barcodeTypes: ["qr"],
@@ -868,7 +867,7 @@ const styles = StyleSheet.create({
   // SCAN OVERLAY
 
   scanOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
   },
