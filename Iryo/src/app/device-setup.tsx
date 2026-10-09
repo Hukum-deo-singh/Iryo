@@ -4,7 +4,7 @@ import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
-
+import type { ColorValue } from "react-native";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -215,10 +215,9 @@ export default function DeviceSetupScreen() {
           ======================================== */}
 
           <View style={styles.formOuter}>
-            <LinearGradient
-              colors={[
-                ...SKEUO_GRADIENTS.raisedSurface,
-              ]}
+         <LinearGradient
+           colors={someColors}
+      
               style={styles.formCard}
             >
               {/* Form heading */}

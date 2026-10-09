@@ -90,6 +90,8 @@ export const SKEUO_GRADIENTS = {
     "#E8EAE5",
   ] as const,
 
+  raisedSurface: ["#FFFFFF", "#F1F2EF"] as const,
+
   insetPanel: [
     "#D7D9D4",
     "#E9EBE6",
@@ -117,6 +119,7 @@ export const SKEUO_GRADIENTS = {
   ] as const,
 } as const;
 
+raisedSurface: ["#FFFFFF", "#F1F2EF"] as const, int 
 
 // --------------------------------------------------
 // 3. BORDER RADIUS

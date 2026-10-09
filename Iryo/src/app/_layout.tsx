@@ -9,10 +9,7 @@ export default function RootLayout() {
   return (
     <>
       {/* Application status bar */}
-      <StatusBar
-        style="dark"
-        backgroundColor={SKEUO_COLORS.background}
-      />
+      <StatusBar style="dark" />
 
       {/* Main application navigation */}
       <Stack
